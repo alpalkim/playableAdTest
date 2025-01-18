@@ -1,131 +1,133 @@
 <!DOCTYPE html>
-<html lang="en-us">
-  <head>
-    <meta charset="utf-8">
-    <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
-    <title>Unity WebGL Player | playable</title>
-    <link rel="shortcut icon" href="TemplateData/favicon.ico">
-    <link rel="stylesheet" href="TemplateData/style.css">
-  </head>
-  <body>
-    <div id="unity-container" class="unity-desktop">
-      <canvas id="unity-canvas" width=828 height=1792 tabindex="-1"></canvas>
-      <div id="unity-loading-bar">
-        <div id="unity-logo"></div>
-        <div id="unity-progress-bar-empty">
-          <div id="unity-progress-bar-full"></div>
-        </div>
-      </div>
-      <div id="unity-warning"> </div>
-      <div id="unity-footer">
-        <div id="unity-webgl-logo"></div>
-        <div id="unity-fullscreen-button"></div>
-        <div id="unity-build-title">playable</div>
-      </div>
-    </div>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Catch the Stars</title>
+    <style>
+        body {
+            margin: 0;
+            overflow: hidden;
+            font-family: Arial, sans-serif;
+            background: linear-gradient(to bottom, #001f3f, #0074D9);
+        }
+        canvas {
+            display: block;
+        }
+    </style>
+</head>
+<body>
+    <canvas id="gameCanvas"></canvas>
+
     <script>
+        const canvas = document.getElementById("gameCanvas");
+        const ctx = canvas.getContext("2d");
+        canvas.width = window.innerWidth;
+        canvas.height = window.innerHeight;
 
-      var container = document.querySelector("#unity-container");
-      var canvas = document.querySelector("#unity-canvas");
-      var loadingBar = document.querySelector("#unity-loading-bar");
-      var progressBarFull = document.querySelector("#unity-progress-bar-full");
-      var fullscreenButton = document.querySelector("#unity-fullscreen-button");
-      var warningBanner = document.querySelector("#unity-warning");
+        const basket = {
+            x: canvas.width / 2 - 50,
+            y: canvas.height - 100,
+            width: 100,
+            height: 20,
+            color: "#FFDC00",
+            speed: 7
+        };
 
-      // Shows a temporary message banner/ribbon for a few seconds, or
-      // a permanent error message on top of the canvas if type=='error'.
-      // If type=='warning', a yellow highlight color is used.
-      // Modify or remove this function to customize the visually presented
-      // way that non-critical warnings and error messages are presented to the
-      // user.
-      function unityShowBanner(msg, type) {
-        function updateBannerVisibility() {
-          warningBanner.style.display = warningBanner.children.length ? 'block' : 'none';
+        const stars = [];
+        let score = 0;
+        let gameOver = false;
+
+        function createStar() {
+            const size = Math.random() * 20 + 10;
+            stars.push({
+                x: Math.random() * canvas.width,
+                y: -size,
+                size: size,
+                speed: Math.random() * 3 + 2,
+                color: "#FF4136"
+            });
         }
-        var div = document.createElement('div');
-        div.innerHTML = msg;
-        warningBanner.appendChild(div);
-        if (type == 'error') div.style = 'background: red; padding: 10px;';
-        else {
-          if (type == 'warning') div.style = 'background: yellow; padding: 10px;';
-          setTimeout(function() {
-            warningBanner.removeChild(div);
-            updateBannerVisibility();
-          }, 5000);
+
+        function drawBasket() {
+            ctx.fillStyle = basket.color;
+            ctx.fillRect(basket.x, basket.y, basket.width, basket.height);
         }
-        updateBannerVisibility();
-      }
 
-      var buildUrl = "Build";
-      var loaderUrl = buildUrl + "/playableAdTest.loader.js";
-      var config = {
-        dataUrl: buildUrl + "/playableAdTest.data.gz",
-        frameworkUrl: buildUrl + "/playableAdTest.framework.js.gz",
-        codeUrl: buildUrl + "/playableAdTest.wasm.gz",
-        streamingAssetsUrl: "StreamingAssets",
-        companyName: "DefaultCompany",
-        productName: "playable",
-        productVersion: "1.0",
-        showBanner: unityShowBanner,
-      };
+        function drawStars() {
+            stars.forEach(star => {
+                ctx.fillStyle = star.color;
+                ctx.beginPath();
+                ctx.arc(star.x, star.y, star.size, 0, Math.PI * 2);
+                ctx.fill();
+            });
+        }
 
-      // By default, Unity keeps WebGL canvas render target size matched with
-      // the DOM size of the canvas element (scaled by window.devicePixelRatio)
-      // Set this to false if you want to decouple this synchronization from
-      // happening inside the engine, and you would instead like to size up
-      // the canvas DOM size and WebGL render target sizes yourself.
-      // config.matchWebGLToCanvasSize = false;
+        function moveBasket() {
+            if (keys.ArrowLeft && basket.x > 0) {
+                basket.x -= basket.speed;
+            }
+            if (keys.ArrowRight && basket.x + basket.width < canvas.width) {
+                basket.x += basket.speed;
+            }
+        }
 
-      // If you would like all file writes inside Unity Application.persistentDataPath
-      // directory to automatically persist so that the contents are remembered when
-      // the user revisits the site the next time, uncomment the following line:
-      // config.autoSyncPersistentDataPath = true;
-      // This autosyncing is currently not the default behavior to avoid regressing
-      // existing user projects that might rely on the earlier manual
-      // JS_FileSystem_Sync() behavior, but in future Unity version, this will be
-      // expected to change.
+        function updateStars() {
+            stars.forEach((star, index) => {
+                star.y += star.speed;
 
-      if (/iPhone|iPad|iPod|Android/i.test(navigator.userAgent)) {
-        // Mobile device style: fill the whole browser client area with the game canvas:
+                // Check for collision with the basket
+                if (
+                    star.y + star.size > basket.y &&
+                    star.x > basket.x &&
+                    star.x < basket.x + basket.width
+                ) {
+                    score++;
+                    stars.splice(index, 1);
+                } else if (star.y > canvas.height) {
+                    gameOver = true;
+                }
+            });
+        }
 
-        var meta = document.createElement('meta');
-        meta.name = 'viewport';
-        meta.content = 'width=device-width, height=device-height, initial-scale=1.0, user-scalable=no, shrink-to-fit=yes';
-        document.getElementsByTagName('head')[0].appendChild(meta);
-        container.className = "unity-mobile";
-        canvas.className = "unity-mobile";
+        function displayScore() {
+            ctx.fillStyle = "#FFFFFF";
+            ctx.font = "24px Arial";
+            ctx.fillText(`Score: ${score}`, 10, 30);
+        }
 
-        // To lower canvas resolution on mobile devices to gain some
-        // performance, uncomment the following line:
-        // config.devicePixelRatio = 1;
+        function displayGameOver() {
+            ctx.fillStyle = "#FFFFFF";
+            ctx.font = "48px Arial";
+            ctx.textAlign = "center";
+            ctx.fillText("Game Over", canvas.width / 2, canvas.height / 2);
+        }
 
+        const keys = {};
+        window.addEventListener("keydown", e => (keys[e.key] = true));
+        window.addEventListener("keyup", e => (keys[e.key] = false));
 
-      } else {
-        // Desktop style: Render the game canvas in a window that can be maximized to fullscreen:
+        function gameLoop() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-        canvas.style.width = "828px";
-        canvas.style.height = "1792px";
-      }
+            if (Math.random() < 0.02) createStar();
 
-      loadingBar.style.display = "block";
+            moveBasket();
+            updateStars();
 
-      var script = document.createElement("script");
-      script.src = loaderUrl;
-      script.onload = () => {
-        createUnityInstance(canvas, config, (progress) => {
-          progressBarFull.style.width = 100 * progress + "%";
-              }).then((unityInstance) => {
-                loadingBar.style.display = "none";
-                fullscreenButton.onclick = () => {
-                  unityInstance.SetFullscreen(1);
-                };
-              }).catch((message) => {
-                alert(message);
-              });
-            };
+            drawBasket();
+            drawStars();
+            displayScore();
 
-      document.body.appendChild(script);
+            if (gameOver) {
+                displayGameOver();
+                return;
+            }
 
+            requestAnimationFrame(gameLoop);
+        }
+
+        gameLoop();
     </script>
-  </body>
+</body>
 </html>
