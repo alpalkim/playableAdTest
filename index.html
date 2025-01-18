@@ -1,133 +1,122 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Catch the Stars</title>
-    <style>
-        body {
-            margin: 0;
-            overflow: hidden;
-            font-family: Arial, sans-serif;
-            background: linear-gradient(to bottom, #001f3f, #0074D9);
-        }
-        canvas {
-            display: block;
-        }
-    </style>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Memory Pair Game</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+      margin: 0;
+      background-color: #f3f3f3;
+    }
+    .game-board {
+      display: grid;
+      grid-template-columns: repeat(4, 150px);
+      grid-gap: 10px;
+      justify-items: center;
+    }
+    .card {
+      width: 150px;
+      height: 150px;
+      background-color: #ccc;
+      border-radius: 10px;
+      cursor: pointer;
+      position: relative;
+    }
+    .card img {
+      width: 100%;
+      height: 100%;
+      border-radius: 10px;
+      position: absolute;
+      visibility: hidden;
+    }
+    .card.flipped img {
+      visibility: visible;
+    }
+    .card.matched {
+      background-color: #90ee90;
+    }
+    .card.matched img {
+      visibility: visible;
+    }
+    .score {
+      margin-bottom: 20px;
+    }
+  </style>
 </head>
 <body>
-    <canvas id="gameCanvas"></canvas>
 
-    <script>
-        const canvas = document.getElementById("gameCanvas");
-        const ctx = canvas.getContext("2d");
-        canvas.width = window.innerWidth;
-        canvas.height = window.innerHeight;
+  <div class="score">
+    <h1>Memory Pair Game</h1>
+    <p>Find all matching pairs!</p>
+    <p>Moves: <span id="moves">0</span></p>
+  </div>
 
-        const basket = {
-            x: canvas.width / 2 - 50,
-            y: canvas.height - 100,
-            width: 100,
-            height: 20,
-            color: "#FFDC00",
-            speed: 7
-        };
+  <div class="game-board" id="game-board">
+    <!-- Cards will be inserted here by JavaScript -->
+  </div>
 
-        const stars = [];
-        let score = 0;
-        let gameOver = false;
+  <script>
+    const images = [
+      'https://via.placeholder.com/150/FF5733/FFFFFF?text=1',
+      'https://via.placeholder.com/150/33FF57/FFFFFF?text=2',
+      'https://via.placeholder.com/150/3357FF/FFFFFF?text=3',
+      'https://via.placeholder.com/150/FF33FF/FFFFFF?text=4',
+      'https://via.placeholder.com/150/33FFFF/FFFFFF?text=5',
+      'https://via.placeholder.com/150/FFFF33/FFFFFF?text=6'
+    ];
 
-        function createStar() {
-            const size = Math.random() * 20 + 10;
-            stars.push({
-                x: Math.random() * canvas.width,
-                y: -size,
-                size: size,
-                speed: Math.random() * 3 + 2,
-                color: "#FF4136"
-            });
-        }
+    let gameBoard = document.getElementById('game-board');
+    let movesCount = 0;
+    let flippedCards = [];
+    let matchedCards = [];
 
-        function drawBasket() {
-            ctx.fillStyle = basket.color;
-            ctx.fillRect(basket.x, basket.y, basket.width, basket.height);
-        }
+    // Double the images for the pairs
+    const shuffledImages = [...images, ...images].sort(() => Math.random() - 0.5);
 
-        function drawStars() {
-            stars.forEach(star => {
-                ctx.fillStyle = star.color;
-                ctx.beginPath();
-                ctx.arc(star.x, star.y, star.size, 0, Math.PI * 2);
-                ctx.fill();
-            });
-        }
+    // Create the cards
+    shuffledImages.forEach(image => {
+      const card = document.createElement('div');
+      card.classList.add('card');
+      const img = document.createElement('img');
+      img.src = image;
+      card.appendChild(img);
+      card.addEventListener('click', () => flipCard(card, img, image));
+      gameBoard.appendChild(card);
+    });
 
-        function moveBasket() {
-            if (keys.ArrowLeft && basket.x > 0) {
-                basket.x -= basket.speed;
-            }
-            if (keys.ArrowRight && basket.x + basket.width < canvas.width) {
-                basket.x += basket.speed;
-            }
-        }
+    function flipCard(card, img, image) {
+      if (flippedCards.length === 2 || card.classList.contains('flipped') || card.classList.contains('matched')) return;
 
-        function updateStars() {
-            stars.forEach((star, index) => {
-                star.y += star.speed;
+      card.classList.add('flipped');
+      flippedCards.push({ card, img, image });
 
-                // Check for collision with the basket
-                if (
-                    star.y + star.size > basket.y &&
-                    star.x > basket.x &&
-                    star.x < basket.x + basket.width
-                ) {
-                    score++;
-                    stars.splice(index, 1);
-                } else if (star.y > canvas.height) {
-                    gameOver = true;
-                }
-            });
-        }
+      if (flippedCards.length === 2) {
+        movesCount++;
+        document.getElementById('moves').textContent = movesCount;
+        checkMatch();
+      }
+    }
 
-        function displayScore() {
-            ctx.fillStyle = "#FFFFFF";
-            ctx.font = "24px Arial";
-            ctx.fillText(`Score: ${score}`, 10, 30);
-        }
-
-        function displayGameOver() {
-            ctx.fillStyle = "#FFFFFF";
-            ctx.font = "48px Arial";
-            ctx.textAlign = "center";
-            ctx.fillText("Game Over", canvas.width / 2, canvas.height / 2);
-        }
-
-        const keys = {};
-        window.addEventListener("keydown", e => (keys[e.key] = true));
-        window.addEventListener("keyup", e => (keys[e.key] = false));
-
-        function gameLoop() {
-            ctx.clearRect(0, 0, canvas.width, canvas.height);
-
-            if (Math.random() < 0.02) createStar();
-
-            moveBasket();
-            updateStars();
-
-            drawBasket();
-            drawStars();
-            displayScore();
-
-            if (gameOver) {
-                displayGameOver();
-                return;
-            }
-
-            requestAnimationFrame(gameLoop);
-        }
-
-        gameLoop();
-    </script>
+    function checkMatch() {
+      if (flippedCards[0].image === flippedCards[1].image) {
+        flippedCards.forEach(item => item.card.classList.add('matched'));
+        matchedCards.push(flippedCards[0].image);
+      } else {
+        setTimeout(() => {
+          flippedCards.forEach(item => item.card.classList.remove('flipped'));
+        }, 1000);
+      }
+      flippedCards = [];
+      if (matchedCards.length === images.length) {
+        setTimeout(() => alert('You won!'), 500);
+      }
+    }
+  </script>
 </body>
 </html>
