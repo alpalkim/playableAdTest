@@ -9,7 +9,7 @@
   </head>
   <body>
     <div id="unity-container" class="unity-desktop">
-      <canvas id="unity-canvas" width=960 height=540 tabindex="-1"></canvas>
+      <canvas id="unity-canvas" width=828 height=1792 tabindex="-1"></canvas>
       <div id="unity-loading-bar">
         <div id="unity-logo"></div>
         <div id="unity-progress-bar-empty">
@@ -57,11 +57,11 @@
       }
 
       var buildUrl = "Build";
-      var loaderUrl = buildUrl + "/queenTest3.loader.js";
+      var loaderUrl = buildUrl + "/playableAdTest.loader.js";
       var config = {
-        dataUrl: buildUrl + "/queenTest3.data.br",
-        frameworkUrl: buildUrl + "/queenTest3.framework.js.br",
-        codeUrl: buildUrl + "/queenTest3.wasm.br",
+        dataUrl: buildUrl + "/playableAdTest.data.gz",
+        frameworkUrl: buildUrl + "/playableAdTest.framework.js.gz",
+        codeUrl: buildUrl + "/playableAdTest.wasm.gz",
         streamingAssetsUrl: "StreamingAssets",
         companyName: "DefaultCompany",
         productName: "playable",
@@ -103,8 +103,8 @@
       } else {
         // Desktop style: Render the game canvas in a window that can be maximized to fullscreen:
 
-        canvas.style.width = "960px";
-        canvas.style.height = "540px";
+        canvas.style.width = "828px";
+        canvas.style.height = "1792px";
       }
 
       loadingBar.style.display = "block";
